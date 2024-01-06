@@ -33,11 +33,8 @@ DIRECTIONS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 
 GAME_OVER = False
 ##########################################
 
-#TODO: Create a function to play (Pick a tile on the board)
-#TODO: After the tile was picked, refresh the board
 #TODO: Create a way to mark a tile as "NOT SAFE" or something like that
 #TODO: Implement it in a graphical interface
-
 
 
 def init_board(size):
@@ -72,7 +69,7 @@ def bombify(board, difficulty):
 
 
 def near_bomb(board):
-    '''Function that modify the board give in argument to display the number of bomb within a 1 tile range'''
+    '''Function that modify the board given in argument to display the number of bomb within a 1 tile range'''
     for i in range(len(board)):
         for j in range(len(board)):
 
@@ -87,16 +84,20 @@ def near_bomb(board):
                 board[i][j] = count
 
 
-def refresh_board(choice):
+def refresh_board(choice, visited = set()):
     '''Function that refreshes the board for the user, showing blank spaces and number of bomb near tile'''
-    if BOMB_BOARD[choice[0]][choice[1]] == '■':
-        USER_BOARD[choice[0]][choice[1]] = ' '
-        for direction in DIRECTIONS:
-                if choice[0] + direction[0] >= 0 and choice[0] + direction[0] < len(USER_BOARD) and choice[1] + direction[1] >= 0 and choice[1] + direction[1] < len(USER_BOARD):
-                    refresh_board(choice)
-    else:
-        USER_BOARD[choice[0]][choice[1]] = BOMB_BOARD[choice[0]][choice[1]]
+    global USER_BOARD, BOMB_BOARD
 
+
+    if choice not in visited:
+        if BOMB_BOARD[choice[0]][choice[1]] == '■':
+            USER_BOARD[choice[0]][choice[1]] = ' '
+            for direction in DIRECTIONS:
+                if choice[0] + direction[0] >= 0 and choice[0] + direction[0] < len(USER_BOARD) and choice[1] + direction[1] >= 0 and choice[1] + direction[1] < len(USER_BOARD):
+                    visited.add(choice)
+                    refresh_board((choice[0] + direction[0], choice[1] + direction[1]))
+        else:
+            USER_BOARD[choice[0]][choice[1]] = BOMB_BOARD[choice[0]][choice[1]]
 
 
 def play(board):
