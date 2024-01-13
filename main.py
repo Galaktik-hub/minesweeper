@@ -28,7 +28,7 @@ DIRECTIONS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 
 
 ##########################################
 
-#TODO: Create a way to mark a tile as "NOT SAFE" or something like that
+#TODO: Create a way to mark a tile as "NOT SAFE" (Flag it)
 #TODO: Implement it in a graphical interface
 #TODO: Make the first click impossible to get a bomb, then in a given radius, have no bomb (Kind of like the google one)
 
@@ -36,13 +36,22 @@ DIRECTIONS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 
 
 class Minesweeper:
 
-    def __init__(self, difficulty):
-        self.difficulty = difficulty
+    def __init__(self):
+        # Constants and data structures
+        self.difficulty = self.choose_difficulty()
+        print(self.difficulty)
         self.user_board = self.init_board()     # Board used to know where the bombs are, and display elements once the user revealed them
         self.bomb_board = self.init_board()     # Board used to display the game
-        self.game_over_value = False
-        self.window = tk.Tk()
+        self.game_over_value = False    # Useful ?
+        self.window = tk.Tk()   # Creation of the window
+        self.start_game()   # We start the game
 
+
+    def start_game(self):
+        '''Function that calls all the functions needed to start the game'''
+        self.bombify()      # We put bombs on the board
+        self.near_bomb()    # We display the number of bombs near each tile
+        self.init_window()
 
     def init_board(self):
         '''Returns an empty square matrix of the difficulty size'''
@@ -51,7 +60,11 @@ class Minesweeper:
     
     def init_window(self):
         '''Function that displays the game window'''
+
         self.window.title("Minesweeper")
+        self.window.resizable(False, False)
+        self.window.geometry("500x500")
+
         for i in range(BOARD_INFO[self.difficulty][0]):  # Creation of all the buttons that represent tiles
             for j in range(BOARD_INFO[self.difficulty][0]):
                 self.window.columnconfigure(i, weight=1)
@@ -63,23 +76,14 @@ class Minesweeper:
                     borderwidth=1
                 )
                 frame.grid(row=j, column=i)
-                label = tk.Button(master=frame, text=f"{i, j}")
+                label = tk.Button(master=frame, text=f"{self.user_board[i][j]}", command=lambda x = (i, j): self.play(x))
                 label.pack()
 
         self.window.mainloop()
 
-
-    def display_board(self, board):
-        '''Print in the console the board given in argument'''
-        print()
-        for line in board:
-            print('|', end=' ')
-
-            for tile in line:
-                print(tile, end = ' | ')
-
-            print()
-        print()
+    
+    def refresh_window(self):
+        '''Function that refreshes the window'''
 
 
     def bombify(self):
@@ -124,11 +128,9 @@ class Minesweeper:
                 self.user_board[choice[0]][choice[1]] = self.bomb_board[choice[0]][choice[1]]   # We show the number of bomb near the tile
 
 
-    def play(self, board):
+    def play(self, choice):
         '''Main function used to play'''
-        choice = (int(input('Choose a row to play: ')), int(input('Choose a column to play: ')))
-
-        if board[choice[0]][choice[1]] == 'X':  # If the tile chosen is a bomb, we launch the game over sequence
+        if self.user_board[choice[0]][choice[1]] == 'X':  # If the tile chosen is a bomb, we launch the game over sequence
             self.game_over()
         else:   # Else, we refresh the board and continue to play 
             self.refresh_board(choice)
@@ -137,50 +139,34 @@ class Minesweeper:
     def game_over(self):
         '''Function use to display the game over'''
         print('Sorry, you picked a bomb!')
-        self.game_over_value = True
+        self.window.destroy()
 
 
-def choose_difficulty():
-    '''Function used to choose the difficulty'''
+    def choose_difficulty(self):
+        '''Function used to choose the difficulty'''
 
-    window = tk.Tk()
-    window.title("Minesweeper - Choose a difficulty")
-    for i in range(4):  # Creation of four buttons to choose difficulty
-        window.columnconfigure(i, weight=1, minsize=150)
-        window.rowconfigure(0, weight=1, minsize=75)
+        window = tk.Tk()
+        window.title("Minesweeper - Choose a difficulty")
+        for i in range(4):  # Creation of four buttons to choose difficulty
+            window.columnconfigure(i, weight=1, minsize=150)
+            window.rowconfigure(0, weight=1, minsize=75)
 
-        frame = tk.Frame(
-            master=window,
-            relief=tk.RAISED,
-            borderwidth=1
-        )
-        frame.grid(row=0, column=i)
-        label = tk.Button(master=frame, text=f"{list(BOARD_INFO)[i]}", command=lambda x=f"{list(BOARD_INFO)[i]}": main(x, window))
-        label.pack()
+            frame = tk.Frame(
+                master=window,
+                relief=tk.RAISED,
+                borderwidth=1
+            )
+            frame.grid(row=0, column=i)
+            label = tk.Button(master=frame, text=f"{list(BOARD_INFO)[i]}", command= lambda x=f"{list(BOARD_INFO)[i]}": self.set_difficulty(x, window))
+            label.pack()
 
-    window.mainloop()
-
-def main(difficulty, window):
-    window.destroy()
-
-    game = Minesweeper(difficulty)
-
-    game.bombify()
-    game.near_bomb()
-
-    game.display_board(game.bomb_board)
-
-    game.init_window()
-
-    while True:
-
-        if game.game_over_value:
-            break
-
-        game.display_board(game.user_board)
-        game.play(game.bomb_board)
-
+        window.mainloop()
+    
+    def set_difficulty(self, difficulty, window):
+        '''Function used to set the difficulty'''
+        self.difficulty = difficulty
+        window.destroy()
 
 if __name__ == '__main__':
 
-    difficulty = choose_difficulty()
+    Minesweeper()
